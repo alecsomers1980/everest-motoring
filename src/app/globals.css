@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Custom Scrollbar for modern feel */
+  ::-webkit-scrollbar {
+      width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+      background: #f1f1f1; 
+  }
+  ::-webkit-scrollbar-thumb {
+      background: #c1c1c1; 
+      border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+      background: #a8a8a8;
+  }
+
+  /* Brand typography: Inter everywhere by default. Only page-banner titles use
+     Microgramma D Extended — they opt in via the `font-display` utility class. */
+  body {
+      font-family: var(--font-inter), system-ui, sans-serif;
+  }
+
+  /* Respect users who ask for less motion. */
+  @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+      }
+  }
+}

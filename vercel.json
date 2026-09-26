@@ -1,0 +1,36 @@
+{
+    "crons": [
+        {
+            "path": "/api/cron/monthly-report",
+            "schedule": "0 7 1 * *"
+        },
+        {
+            "path": "/api/cron/news-monthly",
+            "schedule": "0 9 1 * *"
+        },
+        {
+            "path": "/api/cron/news-publish",
+            "schedule": "0 9 7,21 * *"
+        },
+        {
+            "path": "/api/cron/anniversary-emails",
+            "schedule": "0 8 1 * *"
+        },
+        {
+            "path": "/api/cron/newsletter-yearly",
+            "schedule": "0 9 1 1 *"
+        },
+        {
+            "path": "/api/cron/cleanup-sold-cf-streams",
+            "schedule": "0 3 * * *"
+        },
+        {
+            "path": "/api/cron/advance-video",
+            "schedule": "* * * * *"
+        },
+        {
+            "path": "/api/cron/advance-sale-video",
+            "schedule": "* * * * *"
+        }
+    ]
+}

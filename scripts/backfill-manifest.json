@@ -1,0 +1,145 @@
+[
+  {
+    "carId": "7a452f4a-4f9c-4434-b45c-654d247e69be",
+    "label": "2021 Volkswagen T-Roc 1.4 TSI Design Auto",
+    "oldUid": "e888ada8485a611cbf517f05ae521ffb",
+    "newUid": "27c42b00244c8dcaa0eac9d4c566973e",
+    "status": "success",
+    "error": null,
+    "ts": "2026-05-05T10:45:14.118Z",
+    "cleanedUp": true,
+    "cleanedUpAt": "2026-05-05T11:32:26.239Z"
+  },
+  {
+    "carId": "14100c43-5087-4faa-8cce-e0df8ea575c7",
+    "label": "2025 Toyota Toyota Hilux 2.4 GD Single-Cab",
+    "oldUid": "2564ff6b5495f05b920ad8151839566f",
+    "newUid": "fe9c51e2be3c515e45d0b3a059c81b14",
+    "status": "success",
+    "error": null,
+    "ts": "2026-05-05T10:45:54.964Z",
+    "cleanedUp": true,
+    "cleanedUpAt": "2026-05-05T11:32:27.222Z"
+  },
+  {
+    "carId": "ae226ac4-cfdc-49ec-9d65-e1bdb836120c",
+    "label": "2025 Suzuki Fronx 1.5 GL",
+    "oldUid": "7427c49e5bf110cd7a7b76def504d1c9",
+    "newUid": "c5b39f438ced498bd47180a26ca08f40",
+    "status": "success",
+    "error": null,
+    "ts": "2026-05-05T10:46:33.793Z",
+    "cleanedUp": true,
+    "cleanedUpAt": "2026-05-05T11:32:28.076Z"
+  },
+  {
+    "carId": "280e11fb-3634-4e62-b60f-06fceaef3de2",
+    "label": "2022 Nissan NP200 1.6 A/C Safety Pack",
+    "oldUid": "f1a3b9b31e3048aa54e8f8b70d596b15",
+    "newUid": "f383d8bf537e886c44cee4c8ca04ef4e",
+    "status": "success",
+    "error": null,
+    "ts": "2026-05-05T10:47:37.900Z",
+    "cleanedUp": true,
+    "cleanedUpAt": "2026-05-05T11:32:29.386Z"
+  },
+  {
+    "carId": "ccb95952-fbfb-4037-9cf8-792bb41841b3",
+    "label": "2024 Suzuki Grand Vitara 1.5 GLX Auto",
+    "oldUid": "8f4d2f7a1856e4b203f959c1fafa53da",
+    "newUid": "aa8c745ff1e99e5fd84b1aa3b9ff8633",
+    "status": "success",
+    "error": null,
+    "ts": "2026-05-05T10:48:37.810Z",
+    "cleanedUp": true,
+    "cleanedUpAt": "2026-05-05T11:32:30.798Z"
+  },
+  {
+    "carId": "c8cda0dc-4482-480f-bc00-d6f1d94bc795",
+    "label": "2020 BMW X3 xDrive20d",
+    "oldUid": "265406ae380dd4d229cd62a562fe43a7",
+    "newUid": "449d38061eefdfc29a67c4dee655f6e4",
+    "status": "success",
+    "error": null,
+    "ts": "2026-05-05T10:49:17.450Z",
+    "cleanedUp": true,
+    "cleanedUpAt": "2026-05-05T11:32:31.573Z"
+  },
+  {
+    "carId": "cd67bd70-877c-4d23-ab83-764c8d66f862",
+    "label": "2022 Renault Kiger 1.0T Intens",
+    "oldUid": "8ac44222f30e452981bcb84415a46211",
+    "newUid": "6bf6d2ede45221ab8e7fc8012ffaa2fe",
+    "status": "success",
+    "error": null,
+    "ts": "2026-05-05T10:50:07.840Z",
+    "cleanedUp": true,
+    "cleanedUpAt": "2026-05-05T11:32:32.558Z"
+  },
+  {
+    "carId": "77c528e2-8f3b-4943-a55a-5962abf5e70a",
+    "label": "2023 Volkswagen Polo 1.0 TSI Life",
+    "oldUid": "684c8a8b779457d25317fdc86ab7382c",
+    "newUid": "ae17d6f7c8bf2ca8641ca45ed0fbe665",
+    "status": "success",
+    "error": null,
+    "ts": "2026-05-05T10:51:07.554Z",
+    "cleanedUp": true,
+    "cleanedUpAt": "2026-05-05T11:32:33.537Z"
+  },
+  {
+    "carId": "24a4b2da-6a0b-45b6-8414-75cc26214dd2",
+    "label": "2014 Land Rover Discovery 4 3.0 TD | SD V6 HSE",
+    "oldUid": "b9b31191953bc994154f73b1d49a7eb8",
+    "newUid": "5f5b62bf89f951efb670320e3c2ef4fa",
+    "status": "success",
+    "error": null,
+    "ts": "2026-05-05T10:51:58.910Z",
+    "cleanedUp": true,
+    "cleanedUpAt": "2026-05-05T11:32:34.492Z"
+  },
+  {
+    "carId": "ba02dcc2-20eb-4eb8-b581-9272e6258f75",
+    "label": "2017 Volkswagen Caravelle T6 2.0 BiTDI Highline Auto 4Motion",
+    "oldUid": "b0c569b12998537b40e81a582f88113b",
+    "newUid": "717f0a10a1eaa251887a55f62bcb8883",
+    "status": "success",
+    "error": null,
+    "ts": "2026-05-05T10:52:50.370Z",
+    "cleanedUp": true,
+    "cleanedUpAt": "2026-05-05T11:32:35.267Z"
+  },
+  {
+    "carId": "23ede1a8-0789-4f02-a214-d0bc8d65b997",
+    "label": "2016 Land Rover Discovery 4 3.0 SD V6 Landmark",
+    "oldUid": "12e31b2fb514bef4e7cc336d18af00f0",
+    "newUid": "c73eeefabe6be1e48356424953fd6b97",
+    "status": "success",
+    "error": null,
+    "ts": "2026-05-05T10:53:24.508Z",
+    "cleanedUp": true,
+    "cleanedUpAt": "2026-05-05T11:32:36.129Z"
+  },
+  {
+    "carId": "babc2689-1262-4385-ba31-a512b6302eb6",
+    "label": "2019 Toyota Land Cruiser 79 4.5 D Single-Cab",
+    "oldUid": "56b09ca2e42707e1c59a48867d2ac3fb",
+    "newUid": "1b8faff3061c18dc83315845f2674f69",
+    "status": "success",
+    "error": null,
+    "ts": "2026-05-05T10:54:04.648Z",
+    "cleanedUp": true,
+    "cleanedUpAt": "2026-05-05T11:32:37.047Z"
+  },
+  {
+    "carId": "b7ef2493-09b8-4431-8675-d5705baf62ed",
+    "label": "2024 Toyota Hilux 2.4 GD-6 Raised Body Raider Auto Double-Cab",
+    "oldUid": "dfe6a7a35bb16d4778435b49d68c38c6",
+    "newUid": "c9ef36be5001fdf06e87a9fbea5bdee1",
+    "status": "success",
+    "error": null,
+    "ts": "2026-05-05T10:54:46.006Z",
+    "cleanedUp": true,
+    "cleanedUpAt": "2026-05-05T11:32:37.911Z"
+  }
+]
