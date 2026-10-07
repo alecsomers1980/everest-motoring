@@ -113,10 +113,25 @@ export async function GET(request, { params }) {
         />
 
         {/* 1. Hero */}
-        <div style={{ display: "flex", flexShrink: 0, height: heroHeight, background: "#000000" }}>
+        {/* Photos are ~4:3 but the hero is 2.5:1, so "cover" alone cropped the car.
+            Show the whole photo ("contain") over a blurred, dimmed fill of itself. */}
+        <div style={{ display: "flex", flexShrink: 0, height: heroHeight, background: "#000000", position: "relative" }}>
           <img
             src={car.main_image_url}
-            style={{ width: WIDTH, height: heroHeight, objectFit: "cover" }}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: WIDTH,
+              height: heroHeight,
+              objectFit: "cover",
+              filter: "blur(24px)",
+              opacity: 0.45,
+            }}
+          />
+          <img
+            src={car.main_image_url}
+            style={{ position: "absolute", top: 0, left: 0, width: WIDTH, height: heroHeight, objectFit: "contain" }}
           />
         </div>
 
