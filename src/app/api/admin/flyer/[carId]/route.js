@@ -14,6 +14,19 @@ const CONTACTS = [
   { name: "George", number: "082 478 7676" },
 ];
 
+// Short labels for the flyer table, plus the phrase used in the description.
+const SERVICE_HISTORY = {
+  full_franchise: { short: "Full (franchise)", phrase: "a full franchise service history" },
+  full: { short: "Full", phrase: "a full service history" },
+  full_non_franchise: { short: "Full (non-franchise)", phrase: "a full service history" },
+  full_partial_franchise: { short: "Full (part franchise)", phrase: "a full service history" },
+  partial: { short: "Partial", phrase: "a partial service history" },
+  none: { short: "None" },
+};
+
+// SA listings say 4x2, the admin form stores 2x4.
+const DRIVETRAIN = { "2x4": "4x2", "4x4": "4x4", AWD: "AWD" };
+
 export async function GET(request, { params }) {
   const { carId } = await params;
 
@@ -21,7 +34,7 @@ export async function GET(request, { params }) {
   const { data: car, error } = await supabase
     .from("cars")
     .select(
-      "id, make, model, year, price, mileage, transmission, fuel_type, colour, manufacturer_colour, main_image_url, gallery_urls, features, status"
+      "id, make, model, year, price, mileage, transmission, fuel_type, colour, manufacturer_colour, main_image_url, gallery_urls, features, condition, drivetrain, previous_owners, service_history, has_warranty"
     )
     .eq("id", carId)
     .single();
@@ -29,21 +42,40 @@ export async function GET(request, { params }) {
   if (error || !car) {
     return new Response("Car not found", { status: 404 });
   }
+  // Some models are stored with stray/double spaces, which doubled gaps in the title.
+  car.model = car.model?.replace(/\s+/g, " ").trim();
 
-  // Load the Microgramma brand font (the typeface the website uses for titles).
-  // This route runs in the Node runtime (Supabase + qrcode), where fetch() can't
-  // read file:// URLs, so read the traced asset synchronously and hand Satori a
-  // clean ArrayBuffer. If it can't be loaded, fall back to the default font so
-  // the flyer still renders rather than 500-ing.
+  // Load the brand fonts: Microgramma for headings (the website's title face) and
+  // Inter for body copy (the website's body face). This route runs in the Node
+  // runtime (Supabase + qrcode), where fetch() can't read file:// URLs, so read the
+  // traced assets synchronously and hand Satori clean ArrayBuffers. If they can't
+  // be loaded, fall back to the default font so the flyer still renders rather
+  // than 500-ing.
   let fontsOption;
   try {
-    const buf = readFileSync(
-      fileURLToPath(new URL("../../../../../fonts/MicrogrammaDExtendedBold.otf", import.meta.url))
-    );
-    const microgramma = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
-    fontsOption = [{ name: "Microgramma", data: microgramma, weight: 700, style: "normal" }];
+    const load = (buf) => buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
+    fontsOption = [
+      {
+        name: "Microgramma",
+        data: load(readFileSync(fileURLToPath(new URL("../../../../../fonts/MicrogrammaDExtendedBold.otf", import.meta.url)))),
+        weight: 700,
+        style: "normal",
+      },
+      {
+        name: "Inter",
+        data: load(readFileSync(fileURLToPath(new URL("../../../../../fonts/Inter-Regular.ttf", import.meta.url)))),
+        weight: 400,
+        style: "normal",
+      },
+      {
+        name: "Inter",
+        data: load(readFileSync(fileURLToPath(new URL("../../../../../fonts/Inter-SemiBold.ttf", import.meta.url)))),
+        weight: 600,
+        style: "normal",
+      },
+    ];
   } catch (e) {
-    console.warn("Flyer: Microgramma font load failed, using default:", e.message);
+    console.warn("Flyer: font load failed, using default:", e.message);
     fontsOption = undefined;
   }
 
@@ -51,7 +83,7 @@ export async function GET(request, { params }) {
   const listingLink = `${siteUrl}/inventory/${car.id}`;
   const qrDataUrl = await QRCode.toDataURL(listingLink, {
     margin: 1,
-    width: 240,
+    width: 400,
     color: { dark: "#000000", light: "#ffff01" },
   });
 
@@ -59,32 +91,69 @@ export async function GET(request, { params }) {
   // which renders as tofu once a custom font is loaded — normalise to a plain space.
   const nf = (n) => new Intl.NumberFormat("en-ZA").format(n).replace(/\s/g, " ");
   const price = `R ${nf(car.price)}`;
-  const specRows = [
-    car.mileage
-      ? { label: "Mileage", value: `${nf(car.mileage)} km` }
-      : null,
-    car.transmission ? { label: "Transmission", value: car.transmission } : null,
-    car.fuel_type ? { label: "Fuel Type", value: car.fuel_type } : null,
-    car.manufacturer_colour || car.colour
-      ? { label: "Colour", value: car.manufacturer_colour || car.colour }
-      : null,
+  const colour = car.manufacturer_colour || car.colour;
+  const serviceHistory = SERVICE_HISTORY[car.service_history];
+  const isNew = car.condition === "new";
+
+  // Two-column details table (like a dealer listing sheet); empty values are skipped.
+  const row = (label, value) => (value || value === 0 ? { label, value: String(value) } : null);
+  const detailColumns = [
+    [
+      row("Make", car.make),
+      row("Model", car.model),
+      row("Year", car.year),
+      row("New/Used", car.condition ? (isNew ? "New" : "Used") : null),
+      row("Fuel Type", car.fuel_type),
+      row("Transmission", car.transmission),
+    ],
+    [
+      row("Colour", colour),
+      row("Mileage", car.mileage != null ? `${nf(car.mileage)} km` : null),
+      row("Drive", DRIVETRAIN[car.drivetrain] || car.drivetrain),
+      row("Previous Owners", car.previous_owners),
+      row("Service History", serviceHistory?.short),
+      row("Warranty", car.has_warranty == null ? null : car.has_warranty ? "Yes" : "No"),
+    ],
+  ].map((col) => col.filter(Boolean));
+
+  // Short factual description built from the car's own data. The stored
+  // description is ~4 000 characters of SEO copy, far too long for a window flyer.
+  const features = Array.isArray(car.features) ? car.features.slice(0, 6) : [];
+  const extras = [
+    serviceHistory?.phrase,
+    car.previous_owners ? `${car.previous_owners} previous owner${car.previous_owners > 1 ? "s" : ""}` : null,
+    car.has_warranty ? "an active warranty" : null,
   ].filter(Boolean);
+  const description = [
+    `This ${car.year} ${car.make} ${car.model}${colour ? ` in ${colour.toLowerCase()}` : ""} is a ${isNew ? "new" : "pre-owned"}` +
+      `${car.fuel_type ? ` ${car.fuel_type.toLowerCase()}` : ""}${car.transmission ? ` ${car.transmission.toLowerCase()}` : ""}` +
+      `${car.drivetrain === "4x4" || car.drivetrain === "AWD" ? ` ${car.drivetrain}` : ""}` +
+      `${car.mileage ? ` with ${nf(car.mileage)} km on the clock` : ""}.`,
+    extras.length ? `It comes with ${extras.length > 1 ? `${extras.slice(0, -1).join(", ")} and ${extras.at(-1)}` : extras[0]}.` : null,
+    features.length ? `Features include ${features.join(", ")}.` : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
-  const features = Array.isArray(car.features) ? car.features.slice(0, 9) : [];
-  const isAvailable = car.status === "available";
-
-  const heroHeight = 400;
+  const heroHeight = 330;
   const footerHeight = 360;
   const footerBarHeight = 40;
   const footerWedgeTopOffset = 24;
   const footerWedgeTopWidth = 360;
   const footerWedgeBottomWidth = 530;
-  const ctaSectionMargin = 36;
-  const ctaCardPadding = 24;
-  const ctaCardWidth = WIDTH - ctaSectionMargin * 2;
-  const ctaQrSize = 100;
-  const ctaGap = 24;
-  const ctaTextWidth = ctaCardWidth - ctaCardPadding * 2 - ctaQrSize - ctaGap - 2;
+  const qrSize = 170;
+  const sectionBar = {
+    display: "flex",
+    fontFamily: "Microgramma",
+    fontSize: 17,
+    fontWeight: 700,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    color: "#ffffff",
+    background: "#0f172a",
+    borderLeft: "5px solid #ffff01",
+    padding: "10px 18px",
+  };
 
   return new ImageResponse(
     (
@@ -96,7 +165,7 @@ export async function GET(request, { params }) {
           flexDirection: "column",
           background: "#ffffff",
           position: "relative",
-          fontFamily: "Arial, Helvetica, sans-serif",
+          fontFamily: "Inter",
         }}
       >
         {/* Watermark */}
@@ -140,52 +209,26 @@ export async function GET(request, { params }) {
           style={{
             display: "flex",
             flexShrink: 0,
-            alignItems: "flex-end",
+            alignItems: "center",
             justifyContent: "space-between",
-            padding: "32px 40px 28px 40px",
-            borderBottom: "1px solid #eef2f7",
+            padding: "26px 40px 24px 40px",
           }}
         >
-          <div style={{ display: "flex", flexDirection: "column", maxWidth: 600 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 14 }}>
-              <div
-                style={{
-                  display: "flex",
-                  width: 8,
-                  height: 8,
-                  borderRadius: 4,
-                  background: isAvailable ? "#16a34a" : "#d97706",
-                }}
-              />
-              <div
-                style={{
-                  display: "flex",
-                  fontSize: 12,
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: 2.5,
-                  color: isAvailable ? "#16a34a" : "#d97706",
-                }}
-              >
-                {isAvailable ? "Available Now" : "Reserved"}
-              </div>
-            </div>
-            {/* Title using the brand font */}
-            <div
-              style={{
-                display: "flex",
-                fontFamily: "Microgramma",
-                textTransform: "uppercase",
-                fontSize: 26,
-                fontWeight: 700,
-                letterSpacing: 0,
-                lineHeight: 1.18,
-                color: "#0f172a",
-                maxWidth: 600,
-              }}
-            >
-              {car.year} {car.make} {car.model}
-            </div>
+          {/* Title using the brand font */}
+          <div
+            style={{
+              display: "flex",
+              fontFamily: "Microgramma",
+              textTransform: "uppercase",
+              fontSize: 26,
+              fontWeight: 700,
+              letterSpacing: 0,
+              lineHeight: 1.18,
+              color: "#0f172a",
+              maxWidth: 600,
+            }}
+          >
+            {car.year} {car.make} {car.model}
           </div>
           <div
             style={{
@@ -200,7 +243,7 @@ export async function GET(request, { params }) {
               style={{
                 display: "flex",
                 fontSize: 11,
-                fontWeight: 700,
+                fontWeight: 600,
                 textTransform: "uppercase",
                 letterSpacing: 3,
                 color: "#94a3b8",
@@ -233,8 +276,9 @@ export async function GET(request, { params }) {
               <div
                 style={{
                   display: "flex",
+                  fontFamily: "Microgramma",
                   fontSize: 37,
-                  fontWeight: 800,
+                  fontWeight: 700,
                   color: "#ffffff",
                   letterSpacing: 0.5,
                   paddingLeft: 8,
@@ -246,139 +290,50 @@ export async function GET(request, { params }) {
           </div>
         </div>
 
-        {/* 3. Specifications */}
-        <div style={{ display: "flex", flexDirection: "column", flexShrink: 0, padding: "26px 36px 0 36px" }}>
-          <div
-            style={{
-              display: "flex",
-              fontSize: 20,
-              fontWeight: 800,
-              color: "#0f172a",
-              borderBottom: "1px solid #f1f5f9",
-              paddingBottom: 12,
-              marginBottom: 16,
-              textTransform: "uppercase",
-              letterSpacing: 0.5,
-            }}
-          >
-            Vehicle Specifications
-          </div>
-          <div style={{ display: "flex", gap: 12 }}>
-            {specRows.map((row) => (
-              <div
-                key={row.label}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  flex: 1,
-                  background: "#f8fafc",
-                  border: "1px solid #f1f5f9",
-                  borderRadius: 12,
-                  padding: "14px 16px",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    fontSize: 13,
-                    color: "#64748b",
-                    textTransform: "uppercase",
-                    letterSpacing: 0.5,
-                    marginBottom: 5,
-                  }}
-                >
-                  {row.label}
-                </div>
-                <div style={{ display: "flex", fontSize: 18, color: "#0f172a", fontWeight: 700 }}>
-                  {row.value}
-                </div>
+        {/* 3. Vehicle details — two-column label/value table */}
+        <div style={{ display: "flex", flexDirection: "column", flexShrink: 0, padding: "0 36px" }}>
+          <div style={sectionBar}>Vehicle Details</div>
+          <div style={{ display: "flex", gap: 28, padding: "4px 4px 0 4px" }}>
+            {detailColumns.map((col, ci) => (
+              <div key={ci} style={{ display: "flex", flexDirection: "column", flex: 1 }}>
+                {col.map((item) => (
+                  <div
+                    key={item.label}
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      padding: "6px 0",
+                      borderBottom: "1px solid #e2e8f0",
+                    }}
+                  >
+                    <div style={{ display: "flex", width: 170, flexShrink: 0, fontSize: 20, fontWeight: 600, color: "#0f172a" }}>
+                      {item.label}
+                    </div>
+                    <div style={{ display: "flex", flex: 1, fontSize: 20, fontWeight: 400, color: "#1e293b", lineHeight: 1.3 }}>
+                      {item.value}
+                    </div>
+                  </div>
+                ))}
               </div>
             ))}
           </div>
         </div>
 
-        {/* 4. Premium Features */}
-        {features.length > 0 && (
-          <div
-            style={{ display: "flex", flexDirection: "column", flexShrink: 0, padding: "26px 36px 0 36px" }}
-          >
-            <div
-              style={{
-                display: "flex",
-                fontSize: 20,
-                fontWeight: 800,
-                color: "#0f172a",
-                borderBottom: "1px solid #f1f5f9",
-                paddingBottom: 12,
-                marginBottom: 16,
-                textTransform: "uppercase",
-                letterSpacing: 0.5,
-              }}
-            >
-              Premium Features
+        {/* 4. Description + QR */}
+        <div style={{ display: "flex", flexDirection: "column", flexShrink: 0, padding: "18px 36px 0 36px" }}>
+          <div style={sectionBar}>Description</div>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 32, padding: "14px 4px 0 4px" }}>
+            <div style={{ display: "flex", flex: 1, fontSize: 20, fontWeight: 400, color: "#1e293b", lineHeight: 1.5 }}>
+              {description}
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "10px 0" }}>
-              {features.map((feature, idx) => (
-                <div key={idx} style={{ display: "flex", alignItems: "center", gap: 11, width: "33.33%" }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      width: 24,
-                      height: 24,
-                      borderRadius: 12,
-                      background: "#0f172a",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <svg
-                      width="13"
-                      height="13"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#ffff01"
-                      strokeWidth={3.5}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M20 6L9 17l-5-5" />
-                    </svg>
-                  </div>
-                  <div style={{ display: "flex", fontSize: 16, color: "#334155", fontWeight: 600 }}>
-                    {feature}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 4b. Interested + QR, full width */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            flexShrink: 0,
-            gap: ctaGap,
-            width: ctaCardWidth,
-            margin: `20px ${ctaSectionMargin}px 0 ${ctaSectionMargin}px`,
-            background: "#f8fafc",
-            border: "1px solid #f1f5f9",
-            borderRadius: 16,
-            padding: ctaCardPadding,
-          }}
-        >
-          <img
-            src={qrDataUrl}
-            style={{ width: ctaQrSize, height: ctaQrSize, borderRadius: 10, border: "3px solid #ffff01", flexShrink: 0 }}
-          />
-          <div style={{ display: "flex", flexDirection: "column", width: ctaTextWidth }}>
-            <div style={{ display: "flex", fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 4 }}>
-              INTERESTED IN THIS CAR?
-            </div>
-            <div style={{ display: "flex", fontSize: 14, color: "#64748b", lineHeight: 1.4 }}>
-              Scan the code to view the full listing, or call our team directly.
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
+              <img
+                src={qrDataUrl}
+                style={{ width: qrSize, height: qrSize, borderRadius: 12, border: "4px solid #ffff01" }}
+              />
+              <div style={{ display: "flex", fontSize: 15, fontWeight: 600, color: "#0f172a", marginTop: 8 }}>
+                Scan for the full listing
+              </div>
             </div>
           </div>
         </div>
@@ -390,6 +345,7 @@ export async function GET(request, { params }) {
             flexShrink: 0,
             marginTop: "auto",
             width: "100%",
+            fontFamily: "Microgramma",
             height: footerHeight,
             position: "relative",
           }}
