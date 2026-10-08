@@ -28,6 +28,37 @@ const SERVICE_HISTORY = {
 // SA listings say 4x2, the admin form stores 2x4.
 const DRIVETRAIN = { "2x4": "4x2", "4x4": "4x4", AWD: "AWD" };
 
+// Pixel size from a JPEG / PNG / WebP header, so the hero can size the photo
+// to its real shape. Returns null for anything unrecognised.
+function imageSize(buf) {
+  if (buf[0] === 0x89 && buf.toString("ascii", 1, 4) === "PNG") {
+    return { w: buf.readUInt32BE(16), h: buf.readUInt32BE(20) };
+  }
+  if (buf[0] === 0xff && buf[1] === 0xd8) {
+    let i = 2;
+    while (i + 9 < buf.length) {
+      if (buf[i] !== 0xff) { i++; continue; }
+      const m = buf[i + 1];
+      if (m === 0xd8 || m === 0x01 || (m >= 0xd0 && m <= 0xd7) || m === 0xff) { i += m === 0xff ? 1 : 2; continue; }
+      if (m >= 0xc0 && m <= 0xcf && m !== 0xc4 && m !== 0xc8 && m !== 0xcc) {
+        return { h: buf.readUInt16BE(i + 5), w: buf.readUInt16BE(i + 7) };
+      }
+      i += 2 + buf.readUInt16BE(i + 2);
+    }
+    return null;
+  }
+  if (buf.toString("ascii", 0, 4) === "RIFF" && buf.toString("ascii", 8, 12) === "WEBP") {
+    const chunk = buf.toString("ascii", 12, 16);
+    if (chunk === "VP8 ") return { w: buf.readUInt16LE(26) & 0x3fff, h: buf.readUInt16LE(28) & 0x3fff };
+    if (chunk === "VP8L") {
+      const b = buf.readUInt32LE(21);
+      return { w: (b & 0x3fff) + 1, h: ((b >> 14) & 0x3fff) + 1 };
+    }
+    if (chunk === "VP8X") return { w: 1 + buf.readUIntLE(24, 3), h: 1 + buf.readUIntLE(27, 3) };
+  }
+  return null;
+}
+
 export async function GET(request, { params }) {
   const { carId } = await params;
 
@@ -94,6 +125,19 @@ export async function GET(request, { params }) {
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://everestmotoring.co.za";
   const listingLink = `${siteUrl}/inventory/${car.id}`;
+  // Fetch the main photo once: read its shape, then hand Satori the same bytes.
+  let photoSrc = car.main_image_url;
+  let photoAspect = 4 / 3;
+  try {
+    const res = await fetch(car.main_image_url);
+    const buf = Buffer.from(await res.arrayBuffer());
+    const size = imageSize(buf);
+    if (size?.w && size?.h) photoAspect = size.w / size.h;
+    photoSrc = `data:${res.headers.get("content-type") || "image/jpeg"};base64,${buf.toString("base64")}`;
+  } catch (e) {
+    console.warn("Flyer: photo prefetch failed, using URL:", e.message);
+  }
+
   const qrDataUrl = await QRCode.toDataURL(listingLink, {
     margin: 1,
     width: 400,
@@ -149,6 +193,16 @@ export async function GET(request, { params }) {
     .join(" ");
 
   const heroHeight = 330;
+  // The photo takes at least half the strip. 4:3 shots are trimmed from the top only
+  // (showroom shots have spare wall above the roof; tight ones run the bumper to the
+  // bottom edge). Wider shots keep their natural width, so the sides, where an
+  // off-centre car sits, are never cut.
+  const photoWidth = Math.min(720, Math.max(WIDTH / 2, Math.round(heroHeight * photoAspect)));
+  // Satori ignores objectPosition, so place the scaled photo by hand inside a
+  // clipping box: bottom-anchored when it's taller than the box, centred when wider.
+  const fillsWidth = photoWidth / photoAspect >= heroHeight;
+  const photoW = fillsWidth ? photoWidth : Math.round(heroHeight * photoAspect);
+  const photoH = fillsWidth ? Math.round(photoWidth / photoAspect) : heroHeight;
   const footerHeight = 360;
   const footerBarHeight = 40;
   const footerWedgeTopOffset = 24;
@@ -194,20 +248,28 @@ export async function GET(request, { params }) {
           }}
         />
 
-        {/* 1. Hero — big logo on the left, the car photo at its natural shape on the
-            right (height-only, so nothing is cropped), faded into the black logo panel. */}
+        {/* 1. Hero — big logo on black + car photo (sized by photoWidth) faded into it. */}
         <div style={{ display: "flex", flexShrink: 0, height: heroHeight, background: "#000000" }}>
-          <div style={{ display: "flex", flex: 1, alignItems: "center", justifyContent: "center", minWidth: 280 }}>
+          <div style={{ display: "flex", flex: 1, alignItems: "center", justifyContent: "center" }}>
             <img src={LOGO_URL} style={{ width: 250, height: 194 }} />
           </div>
-          <div style={{ display: "flex", flexShrink: 0, position: "relative", maxWidth: 720 }}>
-            <img src={car.main_image_url} style={{ height: heroHeight, maxWidth: 720, objectFit: "cover" }} />
+          <div style={{ display: "flex", flexShrink: 0, position: "relative", width: photoWidth, height: heroHeight, overflow: "hidden" }}>
+            <img
+              src={photoSrc}
+              style={{
+                position: "absolute",
+                left: Math.round((photoWidth - photoW) / 2),
+                top: heroHeight - photoH,
+                width: photoW,
+                height: photoH,
+              }}
+            />
             <div
               style={{
                 position: "absolute",
                 top: 0,
                 left: 0,
-                width: 160,
+                width: 48,
                 height: heroHeight,
                 backgroundImage: "linear-gradient(to right, #000000, rgba(0,0,0,0))",
               }}
