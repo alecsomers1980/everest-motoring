@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import QRCode from "qrcode";
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
-import { createAdminClient } from "@/utils/supabase/server";
+import { createClient, createAdminClient } from "@/utils/supabase/server";
 
 const LOGO_URL = "https://everestmotoring.co.za/images/logo.png";
 const WIDTH = 1000;
@@ -12,6 +12,7 @@ const HEIGHT = 1414; // A4 portrait ratio (210mm x 297mm)
 const CONTACTS = [
   { name: "Anton", number: "078 893 8881" },
   { name: "George", number: "082 478 7676" },
+  { name: "Willem", number: "082 826 0660" },
 ];
 
 // Short labels for the flyer table, plus the phrase used in the description.
@@ -30,7 +31,19 @@ const DRIVETRAIN = { "2x4": "4x2", "4x4": "4x4", AWD: "AWD" };
 export async function GET(request, { params }) {
   const { carId } = await params;
 
+  // Admin-only, same check as the other /api/admin routes.
+  const authClient = await createClient();
+  const { data: { user } } = await authClient.auth.getUser();
+  if (!user) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
   const supabase = await createAdminClient();
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  if (!profile || profile.role !== "admin") {
+    return new Response("Forbidden", { status: 403 });
+  }
+
   const { data: car, error } = await supabase
     .from("cars")
     .select(
@@ -181,27 +194,25 @@ export async function GET(request, { params }) {
           }}
         />
 
-        {/* 1. Hero */}
-        {/* Photos are ~4:3 but the hero is 2.5:1, so "cover" alone cropped the car.
-            Show the whole photo ("contain") over a blurred, dimmed fill of itself. */}
-        <div style={{ display: "flex", flexShrink: 0, height: heroHeight, background: "#000000", position: "relative" }}>
-          <img
-            src={car.main_image_url}
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: WIDTH,
-              height: heroHeight,
-              objectFit: "cover",
-              filter: "blur(24px)",
-              opacity: 0.45,
-            }}
-          />
-          <img
-            src={car.main_image_url}
-            style={{ position: "absolute", top: 0, left: 0, width: WIDTH, height: heroHeight, objectFit: "contain" }}
-          />
+        {/* 1. Hero — big logo on the left, the car photo at its natural shape on the
+            right (height-only, so nothing is cropped), faded into the black logo panel. */}
+        <div style={{ display: "flex", flexShrink: 0, height: heroHeight, background: "#000000" }}>
+          <div style={{ display: "flex", flex: 1, alignItems: "center", justifyContent: "center", minWidth: 280 }}>
+            <img src={LOGO_URL} style={{ width: 250, height: 194 }} />
+          </div>
+          <div style={{ display: "flex", flexShrink: 0, position: "relative", maxWidth: 720 }}>
+            <img src={car.main_image_url} style={{ height: heroHeight, maxWidth: 720, objectFit: "cover" }} />
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: 160,
+                height: heroHeight,
+                backgroundImage: "linear-gradient(to right, #000000, rgba(0,0,0,0))",
+              }}
+            />
+          </div>
         </div>
 
         {/* 2. Title / Price */}
@@ -306,7 +317,7 @@ export async function GET(request, { params }) {
                       borderBottom: "1px solid #e2e8f0",
                     }}
                   >
-                    <div style={{ display: "flex", width: 170, flexShrink: 0, fontSize: 20, fontWeight: 600, color: "#0f172a" }}>
+                    <div style={{ display: "flex", width: ci === 0 ? 150 : 186, flexShrink: 0, fontSize: 20, fontWeight: 600, color: "#0f172a" }}>
                       {item.label}
                     </div>
                     <div style={{ display: "flex", flex: 1, fontSize: 20, fontWeight: 400, color: "#1e293b", lineHeight: 1.3 }}>
@@ -435,15 +446,15 @@ export async function GET(request, { params }) {
             <div style={{ display: "flex", fontSize: 12, fontWeight: 700, letterSpacing: 2.5, color: "#94a3b8", marginBottom: 14, textTransform: "uppercase" }}>
               SPEAK TO OUR SALES TEAM
             </div>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
               {CONTACTS.map((contact, i) => (
                 <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  <div style={{ display: "flex", background: "#0f172a", borderRadius: 24, padding: "8px 22px", marginBottom: 10 }}>
-                    <div style={{ display: "flex", color: "#ffff01", fontSize: 24, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1 }}>
+                  <div style={{ display: "flex", background: "#0f172a", borderRadius: 20, padding: "5px 18px", marginBottom: 6 }}>
+                    <div style={{ display: "flex", color: "#ffff01", fontSize: 18, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1 }}>
                       {contact.name}
                     </div>
                   </div>
-                  <div style={{ display: "flex", fontSize: 28, fontWeight: 800, color: "#0f172a", letterSpacing: 0.5 }}>
+                  <div style={{ display: "flex", fontSize: 23, fontWeight: 800, color: "#0f172a", letterSpacing: 0.5 }}>
                     {contact.number}
                   </div>
                 </div>
