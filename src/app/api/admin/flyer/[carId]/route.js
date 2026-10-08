@@ -193,11 +193,10 @@ export async function GET(request, { params }) {
     .join(" ");
 
   const heroHeight = 330;
-  // The photo takes at least half the strip. 4:3 shots are trimmed from the top only
-  // (showroom shots have spare wall above the roof; tight ones run the bumper to the
-  // bottom edge). Wider shots keep their natural width, so the sides, where an
-  // off-centre car sits, are never cut.
-  const photoWidth = Math.min(720, Math.max(WIDTH / 2, Math.round(heroHeight * photoAspect)));
+  // The photo is shown whole at its natural width (4:3 ≈ 440px, wide ≈ 714px): tight
+  // shots run the car to the bottom edge and the wall logo to the top, so there is
+  // nothing safe to trim. Only photos wider than 720px get their sides trimmed.
+  const photoWidth = Math.min(720, Math.round(heroHeight * photoAspect));
   // Satori ignores objectPosition, so place the scaled photo by hand inside a
   // clipping box: bottom-anchored when it's taller than the box, centred when wider.
   const fillsWidth = photoWidth / photoAspect >= heroHeight;
