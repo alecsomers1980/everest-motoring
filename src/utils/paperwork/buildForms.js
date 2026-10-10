@@ -140,6 +140,13 @@ export function buildRlvValues(deal, financeHouse) {
         ...partyValues("A", financeHouse ? financeHouseParty(financeHouse) : customer),
         ...(financeHouse ? partyValues("B", customer) : {}),
         ...vehicleValues(deal),
+        // Where the vehicle is kept: the customer's street address, cash or financed.
+        "C.kept1": customer.street.lines[0],
+        "C.kept2": customer.street.lines[1],
+        "C.kept3": customer.street.lines[2],
+        "C.keptSuburb": customer.street.suburb,
+        "C.keptCity": customer.street.city,
+        "C.keptCode": customer.street.code,
         "C.driven.self_propelled": "X",
         "C.reason.ownership": "X",
         "C.dateLiable": val(deal.orderDate).replace(/-/g, ""),

@@ -40,6 +40,13 @@ const VEHICLE_RLV = {
     "C.dateLiable": "20260929",
 };
 
+// Where the vehicle is kept: the customer's street address, cash or financed.
+const KEPT = {
+    "C.kept1": "12 Example Road",
+    "C.keptCity": "NELSPRUIT",
+    "C.keptCode": "1200",
+};
+
 describe("buildRlvValues", () => {
     it("puts a cash customer in Part A as title holder and leaves Part B blank", () => {
         expect(buildRlvValues(deal(), null)).toEqual({
@@ -57,6 +64,7 @@ describe("buildRlvValues", () => {
             "A.streetCity": "NELSPRUIT",
             "A.streetCode": "1200",
             ...VEHICLE_RLV,
+            ...KEPT,
         });
     });
 
@@ -90,7 +98,9 @@ describe("buildRlvValues", () => {
             "B.cell": "0821234567",
             "B.street1": "12 Example Road",
             ...VEHICLE_RLV,
+            ...KEPT,
         });
+        expect(values["C.keptSuburb"]).toBeUndefined();
         expect(values["A.firstNames"]).toBeUndefined();
     });
 
