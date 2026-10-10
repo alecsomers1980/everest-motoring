@@ -35,12 +35,13 @@ Rejected: a server route (customer PII would transit Vercel for no gain), and Cl
 New admin page **Stock → Paperwork** at `/admin/paperwork` (admin role only, inherited from `src/app/admin/layout.js`).
 
 1. **Upload:** pick the OTP PDF, and choose **Cash** or a finance house from a dropdown.
-2. **Review:** one screen grouped into Customer / Vehicle / Sale. Every form value is shown and editable, tagged with its origin:
+2. **Review:** one screen grouped into Customer / Vehicle / Sale. Every value the system can fill is shown and editable, tagged with its origin:
    - **From OTP:** copied verbatim.
-   - **Derived:** highlighted, with a short source note (e.g. "from ID number", "from 'A/T' in model").
+   - **Derived:** highlighted, with a short source note (e.g. "from ID number", "from model name").
    - **Blank:** shown as "not on OTP". Staff may type a value or leave it for the pen.
+   - **Edited:** changed by staff on this screen.
 
-   A value longer than its row of boxes shows a warning with the box count, so staff can shorten it.
+   A value longer than its row of boxes shows a warning with the box count, so staff can shorten it. Boxes the system never fills (vehicle category, fuel, kW/cc, tare/GVM, NaTIS model no., steering, use, sector, nature of ownership, public road, signatures and dates) are listed in a "fill in by hand" note. The fixed marks (title-holder transaction, self-propelled, reason "ownership", reason "sold") and the NCO seller details are listed as "always on the forms".
 3. **Download:** two buttons, **RLV (blue)** and **NCO (yellow)**. Each produces the original blank form with the reviewed values stamped in block capitals, one character per box, and X marks in tick boxes. Nothing is persisted.
 
 **Finance houses** tab on the same page: list, add, edit and delete banks.
@@ -73,9 +74,10 @@ All fields come from page 1. A field's value is the text to the right of its lab
 
 | Form value | OTP source | Rule | Origin |
 |---|---|---|---|
-| Title, first names, initials, surname | First line of the Customer block | Leading title (Mr/Mrs/Ms/Miss/Dr/Prof) dropped. Surname = last word plus any directly preceding lowercase particles (van, der, den, de, du, le, la, von, ter). Initials = first letter of each first name, max 3. | OTP |
-| Organisation name | Same line, when there is no leading title | Whole line is the organisation name; person-only boxes (initials, first names, gender, DOB) blank | OTP |
-| ID type + number | "VAT No." value | Only if 13 digits and a valid SA ID (Luhn checksum + real date) → type RSA ID. Otherwise both blank. | OTP |
+| Title, first names, initials, surname | First line of the Customer block | Leading title (Mr/Mrs/Ms/Miss/Dr/Prof/Mnr/Mev/Me/Mej) dropped. Surname = last word plus any directly preceding particles (van, der, den, de, du, le, la, von, ter; any capitalisation), always leaving at least one first name. First names max 3; initials = their first letters. | OTP |
+| Organisation name | Same line, when there is no leading title or it contains Pty/Ltd/Limited/CC/Inc/Trust | Whole line is the organisation name; person-only boxes (initials, first names, gender, DOB) blank, and the "VAT No." value is not read as an ID | OTP |
+| ID number | "VAT No." value | Only if 13 digits and a valid SA ID (Luhn checksum + real date). Otherwise blank. | OTP |
+| ID type | ID number | RSA ID when the ID number is valid; otherwise blank. Editable (RSA ID / foreign ID / traffic register / business reg.). | Derived |
 | Gender | ID number | Digits 7–10: 0000–4999 female, 5000–9999 male. Only with a valid ID. | Derived |
 | Date of birth | ID number | YYMMDD. Century = 20xx if that is not in the future relative to the order date, else 19xx. Only with a valid ID. | Derived |
 | Street address lines, city, postal code | Customer block lines between name and the next label | Last line matched as `CITY [PROVINCE] NNNN` (province ∈ GP, MP, KZN, WC, EC, NC, NW, FS, LP; optional). The lines above it are the street address, with a trailing comma trimmed. If the last line doesn't match, the street lines are kept and city/code are blank. | OTP |
@@ -139,7 +141,9 @@ The table starts empty. Staff add their banks (WesBank etc.) with the real figur
 
 ## Filling the forms
 
-- Every character is uppercased and drawn centred in its box in Helvetica. A string longer than its box run is drawn shrunk to fit across the run rather than truncated, and the review screen has already warned about it.
+- ID numbers (customer, bank, proxy, Everest's 2011/007142/07) are printed without slashes or spaces, because the form gives 13 single-character boxes.
+- Only the proxy blocks with a data source are mapped: RLV Part A proxy and NCO Part B proxy (a bank's proxy). The customer's and Everest's proxy blocks stay blank.
+- Every character is uppercased and drawn centred in its box in Helvetica Bold. A string longer than its box run is drawn shrunk to fit across the run rather than truncated, and the review screen has already warned about it.
 - Tick boxes get a centred "X".
 - Dates go into the `2:0YY : MM : DD` box groups.
 - An empty value draws nothing.
