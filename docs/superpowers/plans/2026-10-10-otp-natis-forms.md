@@ -2304,3 +2304,16 @@ The PR body must say:
 5. Out of scope: trade-in NCO, other dealer systems, saved deals.
 
 End the body with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`. Don't merge: merging auto-deploys, and the user reviews first.
+
+---
+
+## Execution notes (2026-10-10)
+
+An independent DeepSeek review of the branch against the spec raised 9 findings. Each was checked against the code and the real OTP:
+
+- **Fixed:** a deleted finance house still being selected now falls back to Cash with a visible note (`DealForms.jsx`). The cellphone label says it also fills the NCO day-contact number. Phone, fax and cell numbers print as digits only (`buildForms.js`). "Mr van der Merwe" with no first name keeps the whole surname (`parseOtp.js`). The tests for these were written first; DeepSeek wrote the implementation.
+- **Declined:**
+  - Values split across several text runs: hypothetical. On the real OTP every value, name and "Vehicle Colour: …" is a single run.
+  - Calendar-checking the order date: the dealer system prints real dates, and the date is editable on review.
+  - Length warnings on finance-house fields: long values still print, just smaller.
+- **fillForm test:** pdf.js merges neighbouring single characters into one run ("B O"), so the read-back compares without spaces and checks the first and last boxes (Task 6 code above is the updated version).

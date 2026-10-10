@@ -15,6 +15,7 @@ export const NAV_GROUPS = [
         items: [
             { href: "/admin/inventory", label: "Inventory" },
             { href: "/admin/sales", label: "Sales" },
+            { href: "/admin/paperwork", label: "Paperwork" },
         ],
     },
     {
