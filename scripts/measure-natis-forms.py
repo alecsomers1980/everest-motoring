@@ -219,6 +219,12 @@ def rlv(doc):
         "C.colour.other": mark(p3, "other", 229, 178),
         "C.colourOther": cells(p3, 175.26, 307.26),
         "C.odometer": cells(p3, 292.74, 288.48),
+        "C.kept1": cells(p3, 349.68, 112.44),
+        "C.kept2": cells(p3, 363.84, 112.44),
+        "C.kept3": cells(p3, 378.0, 112.44),
+        "C.keptSuburb": cells(p3, 392.16, 112.44),
+        "C.keptCity": cells(p3, 406.32, 112.44),
+        "C.keptCode": cells(p3, 406.32, 432.48),
         "C.dateLiable": date(p3, 437),
         "C.reason.ownership": mark(p3, "ownership", 246, 516),
     }
