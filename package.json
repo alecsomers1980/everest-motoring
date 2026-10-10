@@ -30,11 +30,13 @@
     "lucide-react": "^0.577.0",
     "marked": "^18.0.2",
     "next": "16.1.6",
+    "pdf-lib": "^1.17.1",
     "qrcode": "^1.5.4",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "resend": "^6.9.4",
-    "tailwind-merge": "^3.6.0"
+    "tailwind-merge": "^3.6.0",
+    "unpdf": "^1.8.1"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.19",
