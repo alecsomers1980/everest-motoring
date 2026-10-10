@@ -11,6 +11,7 @@ import { EVEREST } from "./dealer";
 const val = (field) => String(field?.value ?? "").trim();
 const str = (x) => String(x ?? "").trim();
 const alnum = (s) => s.replace(/[^0-9a-z]/gi, "");
+const digits = (s) => s.replace(/\D/g, "");
 const address = (lines, suburb, city, code) => ({ lines: lines.map(str), suburb: str(suburb), city: str(city), code: str(code) });
 
 export function customerParty(deal) {
@@ -67,7 +68,7 @@ export function financeHouseParty(row) {
 
 // The NCO has no cellphone box: its day-contact number takes a 10-digit mobile.
 function withMobileAsDayNumber(party) {
-    const m = party.cell.match(/^(0\d{2})(\d{7})$/);
+    const m = digits(party.cell).match(/^(0\d{2})(\d{7})$/);
     return party.dayNumber || !m ? party : { ...party, dayCode: m[1], dayNumber: m[2] };
 }
 
@@ -80,11 +81,11 @@ export function partyValues(prefix, party) {
         [`${prefix}.firstNames`]: party.firstNames,
         [`${prefix}.dob`]: party.dob.replace(/-/g, ""),
         [`${prefix}.email`]: party.email,
-        [`${prefix}.dayCode`]: party.dayCode,
-        [`${prefix}.dayNumber`]: party.dayNumber,
-        [`${prefix}.faxCode`]: party.faxCode,
-        [`${prefix}.faxNumber`]: party.faxNumber,
-        [`${prefix}.cell`]: party.cell,
+        [`${prefix}.dayCode`]: digits(party.dayCode),
+        [`${prefix}.dayNumber`]: digits(party.dayNumber),
+        [`${prefix}.faxCode`]: digits(party.faxCode),
+        [`${prefix}.faxNumber`]: digits(party.faxNumber),
+        [`${prefix}.cell`]: digits(party.cell),
     };
     for (const kind of ["postal", "street"]) {
         const a = party[kind];

@@ -63,6 +63,11 @@ describe("parseOtp", () => {
         expect([b.firstNames.value, b.surname.value]).toEqual(["Jan", "Van Der Merwe"]);
     });
 
+    it("keeps a particle surname whole when there is no first name", () => {
+        const c = parseOtp(withItems({ "Mr Pieter Botha": "Mr van der Merwe" })).customer;
+        expect([c.firstNames.value, c.initials.value, c.surname.value]).toEqual(["", "", "van der Merwe"]);
+    });
+
     it("keeps at most three first names", () => {
         const c = parseOtp(withItems({ "Mr Pieter Botha": "Mr Pieter Johan Willem Jacobus Botha" })).customer;
         expect([c.firstNames.value, c.initials.value]).toEqual(["Pieter Johan Willem", "PJW"]);

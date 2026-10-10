@@ -94,6 +94,14 @@ describe("buildRlvValues", () => {
         expect(values["A.firstNames"]).toBeUndefined();
     });
 
+    it("prints phone numbers as digits only", () => {
+        const values = buildRlvValues(edited("customer", "cell", "082 123 4567"), { ...BANK, phone_number: "555 0000", fax_code: "(011)", fax_number: "555-0001" });
+        expect(values["B.cell"]).toBe("0821234567");
+        expect(values["A.dayNumber"]).toBe("5550000");
+        expect(values["A.faxCode"]).toBe("011");
+        expect(values["A.faxNumber"]).toBe("5550001");
+    });
+
     it("ticks a basic colour instead of writing it in", () => {
         const values = buildRlvValues(edited("vehicle", "colour", "White"), null);
         expect(values["C.colour.white"]).toBe("X");
@@ -163,6 +171,11 @@ describe("buildNcoValues", () => {
             "B.dayNumber": "1234567",
             ...VEHICLE_NCO,
         });
+    });
+
+    it("still splits an edited mobile with spaces into the day-contact boxes", () => {
+        const values = buildNcoValues(edited("customer", "cell", "082 123 4567"), null);
+        expect([values["B.dayCode"], values["B.dayNumber"]]).toEqual(["082", "1234567"]);
     });
 
     it("sells to the finance house when financed and carries no customer details", () => {

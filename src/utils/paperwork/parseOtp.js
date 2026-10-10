@@ -115,6 +115,8 @@ function splitName(line) {
     const words = line.slice(title[0].length).trim().split(/\s+/);
     let start = words.length - 1; // first word of the surname
     while (start > 1 && PARTICLES.has(words[start - 1].toLowerCase())) start--;
+    // "Mr van der Merwe": no first name, so the leading particles belong to the surname.
+    if (start === 1 && PARTICLES.has(words[0].toLowerCase())) start = 0;
     const first = words.slice(0, start).slice(0, 3);
     return {
         kind: "person",
