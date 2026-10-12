@@ -135,9 +135,14 @@ function onlyIn(layout, values) {
 
 export function buildRlvValues(deal, financeHouse) {
     const customer = customerParty(deal);
+    const titleHolder = financeHouse ? financeHouseParty(financeHouse) : customer;
+    const { lines, suburb, city, code } = titleHolder.postal;
     return onlyIn(RLV, {
         "tx.titleHolder": "X",
-        ...partyValues("A", financeHouse ? financeHouseParty(financeHouse) : customer),
+        ...partyValues("A", titleHolder),
+        "A.country": "RSA",
+        // Everest's licensing office wants "N/A" rather than an empty postal address.
+        ...([...lines, suburb, city, code].some(Boolean) ? {} : { "A.postal1": "N/A" }),
         ...(financeHouse ? partyValues("B", customer) : {}),
         ...vehicleValues(deal),
         // Where the vehicle is kept: the customer's street address, cash or financed.
