@@ -172,6 +172,7 @@ def rlv(doc):
         "B.idType.foreign_id": mark(p1, "foreign", 291, 429),
         "B.idType.business_reg": mark(p1, "business", 354, 429),
         "B.idNumber": cells(p1, 456.36, 214.92),
+        "B.country": cells(p1, 476.16, 131.82),
         "B.nature.male": mark(p1, "male", 142, 498),
         "B.nature.female": mark(p1, "female", 184, 498),
         "B.nature.one_man": mark(p1, "one-man", 232, 498),

@@ -100,6 +100,8 @@ describe("buildRlvValues", () => {
             "B.dob": "19800101",
             "B.cell": "0821234567",
             "B.street1": "12 Example Road",
+            "B.country": "RSA",
+            "B.postal1": "N/A",
             ...VEHICLE_RLV,
             ...KEPT,
         });
@@ -112,7 +114,7 @@ describe("buildRlvValues", () => {
         const values = buildRlvValues(deal(), noPostal);
         expect(values["A.postal1"]).toBe("N/A");
         expect(values["A.street1"]).toBe("1 Bank Street");
-        expect(values["B.postal1"]).toBeUndefined();
+        expect(values["B.postal1"]).toBe("N/A");
     });
 
     it("prints phone numbers as digits only", () => {

@@ -133,17 +133,23 @@ function onlyIn(layout, values) {
     return Object.fromEntries(Object.entries(values).filter(([key, value]) => key in layout && str(value)));
 }
 
+// An RLV party block: country of issue is always RSA, and Everest's licensing
+// office wants "N/A" rather than an empty postal address.
+function rlvPartyValues(prefix, party) {
+    const { lines, suburb, city, code } = party.postal;
+    return {
+        ...partyValues(prefix, party),
+        [`${prefix}.country`]: "RSA",
+        ...([...lines, suburb, city, code].some(Boolean) ? {} : { [`${prefix}.postal1`]: "N/A" }),
+    };
+}
+
 export function buildRlvValues(deal, financeHouse) {
     const customer = customerParty(deal);
-    const titleHolder = financeHouse ? financeHouseParty(financeHouse) : customer;
-    const { lines, suburb, city, code } = titleHolder.postal;
     return onlyIn(RLV, {
         "tx.titleHolder": "X",
-        ...partyValues("A", titleHolder),
-        "A.country": "RSA",
-        // Everest's licensing office wants "N/A" rather than an empty postal address.
-        ...([...lines, suburb, city, code].some(Boolean) ? {} : { "A.postal1": "N/A" }),
-        ...(financeHouse ? partyValues("B", customer) : {}),
+        ...rlvPartyValues("A", financeHouse ? financeHouseParty(financeHouse) : customer),
+        ...(financeHouse ? rlvPartyValues("B", customer) : {}),
         ...vehicleValues(deal),
         // Where the vehicle is kept: the customer's street address, cash or financed.
         "C.kept1": customer.street.lines[0],
