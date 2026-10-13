@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import CookieConsent from "@/components/CookieConsent";
 import GoogleAnalyticsGate from "@/components/GoogleAnalyticsGate";
 import FloatingWhatsApp from "@/components/FloatingWhatsApp";
+import HideOnAdmin from "@/components/HideOnAdmin";
 
 // Self-hosted brand header font (Microgramma D Extended Bold).
 const microgramme = localFont({
@@ -64,9 +65,9 @@ export default function RootLayout({ children }) {
       </head>
       <body className={`${microgramme.variable} ${inter.variable} bg-background-light text-slate-900 font-body antialiased selection:bg-slate-800 selection:text-white`}>
         <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden">
-          <Header siteConfig={siteConfig} />
+          <HideOnAdmin><Header siteConfig={siteConfig} /></HideOnAdmin>
           <main className="flex-1 flex flex-col">{children}</main>
-          <Footer siteConfig={siteConfig} />
+          <HideOnAdmin><Footer siteConfig={siteConfig} /></HideOnAdmin>
         </div>
         <FloatingWhatsApp
           number={siteConfig.whatsapp}

@@ -4,7 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Menu, X } from "lucide-react";
+import {
+    Menu, X, Car, BadgeDollarSign, FileText, MessageSquare, Repeat, Newspaper,
+    Users, Mail, LayoutDashboard, BarChart3, Network, UserCircle, Globe, LogOut,
+} from "lucide-react";
 import { cn } from "@/utils/cn";
 
 // Ten flat nav items in one row were unscannable, and the row was `hidden lg:flex`
@@ -13,32 +16,32 @@ export const NAV_GROUPS = [
     {
         label: "Stock",
         items: [
-            { href: "/admin/inventory", label: "Inventory" },
-            { href: "/admin/sales", label: "Sales" },
-            { href: "/admin/paperwork", label: "Paperwork" },
+            { href: "/admin/inventory", label: "Inventory", icon: Car },
+            { href: "/admin/sales", label: "Sales", icon: BadgeDollarSign },
+            { href: "/admin/paperwork", label: "Paperwork", icon: FileText },
         ],
     },
     {
         label: "Customers",
         items: [
-            { href: "/admin/leads", label: "Car Inquiries" },
-            { href: "/admin/trade-ins", label: "Trade-In Requests" },
+            { href: "/admin/leads", label: "Car Inquiries", icon: MessageSquare },
+            { href: "/admin/trade-ins", label: "Trade-In Requests", icon: Repeat },
         ],
     },
     {
         label: "Marketing",
         items: [
-            { href: "/admin/news", label: "News" },
-            { href: "/admin/subscribers", label: "Subscribers" },
-            { href: "/admin/email-templates", label: "Email Templates" },
+            { href: "/admin/news", label: "News", icon: Newspaper },
+            { href: "/admin/subscribers", label: "Subscribers", icon: Users },
+            { href: "/admin/email-templates", label: "Email Templates", icon: Mail },
         ],
     },
     {
         label: "Reports",
         items: [
-            { href: "/admin", label: "Dashboard" },
-            { href: "/admin/reports", label: "Reports" },
-            { href: "/admin/affiliates", label: "Affiliate Network" },
+            { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+            { href: "/admin/reports", label: "Reports", icon: BarChart3 },
+            { href: "/admin/affiliates", label: "Affiliate Network", icon: Network },
         ],
     },
 ];
@@ -49,30 +52,78 @@ function useIsActive() {
     return (href) => (href === "/admin" ? pathname === "/admin" : pathname.startsWith(href));
 }
 
-export function AdminNavDesktop() {
+const sidebarItem =
+    "group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60";
+
+function SidebarLink({ href, label, icon: Icon, active }) {
+    return (
+        <Link
+            href={href}
+            aria-current={active ? "page" : undefined}
+            className={cn(
+                sidebarItem,
+                active
+                    ? "bg-white/[0.08] text-white font-medium"
+                    : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
+            )}
+        >
+            <Icon
+                className={cn(
+                    "h-4 w-4 shrink-0 transition-colors",
+                    active ? "text-primary" : "text-slate-500 group-hover:text-slate-300"
+                )}
+                aria-hidden="true"
+            />
+            {label}
+        </Link>
+    );
+}
+
+// The top bar outgrew one row; on desktop the nav lives in a fixed left rail.
+// The layout offsets its content by the same width (lg:pl-60).
+export function AdminSidebar() {
     const isActive = useIsActive();
 
     return (
-        <nav className="hidden lg:flex items-center gap-8">
-            {NAV_GROUPS.map((group) => (
-                <div key={group.label} className="flex items-center gap-4">
-                    {group.items.map((item) => (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            className={cn(
-                                "text-sm transition-colors",
-                                isActive(item.href)
-                                    ? "text-white font-medium"
-                                    : "text-slate-400 hover:text-white"
-                            )}
-                        >
-                            {item.label}
-                        </Link>
-                    ))}
-                </div>
-            ))}
-        </nav>
+        <aside className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-60 flex-col bg-black border-r border-hairline-dark">
+            <div className="h-16 shrink-0 flex items-center px-6 border-b border-hairline-dark">
+                <Link href="/admin" className="text-lg font-semibold tracking-display text-white">
+                    Everest<span className="text-primary">.</span>
+                    <span className="ml-2 text-white/50 font-normal">Admin</span>
+                </Link>
+            </div>
+
+            <nav
+                aria-label="Admin"
+                className="flex-1 overflow-y-auto px-3 py-6 space-y-7 [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.15)_transparent]"
+            >
+                {NAV_GROUPS.map((group) => (
+                    <div key={group.label}>
+                        <p className="px-3 mb-2 text-label font-semibold uppercase text-white/50">
+                            {group.label}
+                        </p>
+                        <ul className="space-y-0.5">
+                            {group.items.map((item) => (
+                                <li key={item.href}>
+                                    <SidebarLink {...item} active={isActive(item.href)} />
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                ))}
+            </nav>
+
+            <div className="shrink-0 px-3 py-4 space-y-0.5 border-t border-hairline-dark">
+                <SidebarLink href="/admin/profile" label="Profile" icon={UserCircle} active={isActive("/admin/profile")} />
+                <SidebarLink href="/" label="View site" icon={Globe} active={false} />
+                <form action="/auth/logout" method="POST">
+                    <button type="submit" className={cn(sidebarItem, "text-slate-400 hover:bg-white/[0.04] hover:text-white")}>
+                        <LogOut className="h-4 w-4 shrink-0 text-slate-500 transition-colors group-hover:text-slate-300" aria-hidden="true" />
+                        Sign out
+                    </button>
+                </form>
+            </div>
+        </aside>
     );
 }
 
