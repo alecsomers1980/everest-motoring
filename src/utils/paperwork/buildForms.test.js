@@ -63,6 +63,8 @@ describe("buildRlvValues", () => {
             "A.street1": "12 Example Road",
             "A.streetCity": "NELSPRUIT",
             "A.streetCode": "1200",
+            "A.country": "RSA",
+            "A.postal1": "N/A",
             ...VEHICLE_RLV,
             ...KEPT,
         });
@@ -73,6 +75,7 @@ describe("buildRlvValues", () => {
         expect(values).toMatchObject({
             "A.idType.business_reg": "X",
             "A.idNumber": "199900000106",
+            "A.country": "RSA",
             "A.nature.other": "X",
             "A.natureOther": "Public company",
             "A.surname": "Test Bank",
@@ -97,11 +100,21 @@ describe("buildRlvValues", () => {
             "B.dob": "19800101",
             "B.cell": "0821234567",
             "B.street1": "12 Example Road",
+            "B.country": "RSA",
+            "B.postal1": "N/A",
             ...VEHICLE_RLV,
             ...KEPT,
         });
         expect(values["C.keptSuburb"]).toBeUndefined();
         expect(values["A.firstNames"]).toBeUndefined();
+    });
+
+    it("writes N/A for a finance house with no postal address", () => {
+        const noPostal = { ...BANK, postal_line1: null, postal_city: null, postal_code: null };
+        const values = buildRlvValues(deal(), noPostal);
+        expect(values["A.postal1"]).toBe("N/A");
+        expect(values["A.street1"]).toBe("1 Bank Street");
+        expect(values["B.postal1"]).toBe("N/A");
     });
 
     it("prints phone numbers as digits only", () => {
